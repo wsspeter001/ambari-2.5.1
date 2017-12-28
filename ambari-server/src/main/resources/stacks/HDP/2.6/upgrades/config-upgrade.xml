@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<upgrade-config-changes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="upgrade-config.xsd">
+  <services>
+    <service name="ZEPPELIN">
+      <component name="ZEPPELIN_MASTER">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_0_0_zeppelin_master">
+            <type>zeppelin-env</type>
+            <transfer operation="delete" delete-key="shiro_ini_content" />
+            <transfer operation="delete" delete-key="log4j_properties_content" />
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+    <service name="HDFS">
+      <component name="NAMENODE">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_maint_ranger_hdfs_plugin_cluster_name">
+            <type>ranger-hdfs-audit</type>
+            <set key="ranger.plugin.hdfs.ambari.cluster.name" value="{{cluster_name}}"
+              if-type="ranger-hdfs-plugin-properties" if-key="ranger-hdfs-plugin-enabled" if-key-state="present"/>
+          </definition>
+
+          <definition xsi:type="configure" id="hdfs_namenode_prevent_gc_heuristics" summary="Prevent Garbage Collection Heuristics">
+            <type>hadoop-env</type>
+            <replace  key="content" find="-XX:+PrintGCDateStamps -Xms{{namenode_heapsize}}" replace-with="-XX:+PrintGCDateStamps -XX:CMSInitiatingOccupancyFraction=70 -XX:+UseCMSInitiatingOccupancyOnly -Xms{{namenode_heapsize}}"/>
+            <replace  key="content" find="-XX:+PrintGCDateStamps ${HADOOP_NAMENODE_INIT_HEAPSIZE}" replace-with="-XX:+PrintGCDateStamps -XX:CMSInitiatingOccupancyFraction=70 -XX:+UseCMSInitiatingOccupancyOnly ${HADOOP_NAMENODE_INIT_HEAPSIZE}"/>
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+    <service name="HIVE">
+      <component name="HIVE_SERVER">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_maint_ranger_hive_plugin_cluster_name">
+            <type>ranger-hive-audit</type>
+            <set key="ranger.plugin.hive.ambari.cluster.name" value="{{cluster_name}}"
+              if-type="ranger-hive-audit" if-key="xasecure.audit.destination.solr" if-key-state="present"/>
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+    <service name="HBASE">
+      <component name="HBASE_MASTER">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_maint_ranger_hbase_plugin_cluster_name">
+            <type>ranger-hbase-audit</type>
+            <set key="ranger.plugin.hbase.ambari.cluster.name" value="{{cluster_name}}"
+              if-type="ranger-hbase-plugin-properties" if-key="ranger-hbase-plugin-enabled" if-key-state="present"/>
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+    <service name="KNOX">
+      <component name="KNOX_GATEWAY">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_maint_ranger_knox_plugin_cluster_name">
+            <type>ranger-knox-audit</type>
+            <set key="ranger.plugin.knox.ambari.cluster.name" value="{{cluster_name}}"
+              if-type="ranger-knox-plugin-properties" if-key="ranger-knox-plugin-enabled" if-key-state="present"/>
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+    <service name="STORM">
+      <component name="NIMBUS">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_maint_ranger_storm_plugin_cluster_name">
+            <type>ranger-storm-audit</type>
+            <set key="ranger.plugin.storm.ambari.cluster.name" value="{{cluster_name}}"
+              if-type="ranger-storm-plugin-properties" if-key="ranger-storm-plugin-enabled" if-key-state="present"/>
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+    <service name="YARN">
+      <component name="RESOURCEMANAGER">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_maint_ranger_yarn_plugin_cluster_name">
+            <type>ranger-yarn-audit</type>
+            <set key="ranger.plugin.yarn.ambari.cluster.name" value="{{cluster_name}}"
+              if-type="ranger-yarn-plugin-properties" if-key="ranger-yarn-plugin-enabled" if-key-state="present"/>
+          </definition>
+          <definition xsi:type="configure" id="hdp_2_6_yarn_preemption" summary="Resource Manager Preemption Settings">
+            <type>yarn-site</type>
+            <set key="yarn.resourcemanager.monitor.capacity.preemption.total_preemption_per_round" value="0.1"
+              if-type="yarn-site"
+              if-key="yarn.resourcemanager.monitor.capacity.preemption.total_preemption_per_round"
+              if-key-state="absent" />
+            <set key="yarn.resourcemanager.monitor.capacity.preemption.natural_termination_factor" value="1"
+              if-type="yarn-site"
+              if-key="yarn.resourcemanager.monitor.capacity.preemption.natural_termination_factor"
+              if-key-state="absent" />
+          </definition>
+        </changes>
+      </component>
+      <component name="NODEMANAGER">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_0_0_yarn_nodemanager_llap_mem">
+            <type>yarn-site</type>
+            <set key="yarn.nodemanager.kill-escape.launch-command-line" value="slider-agent,LLAP"/>
+            <set key="yarn.nodemanager.kill-escape.user" value="hive"/>
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+    <service name="KAFKA">
+      <component name="KAFKA_BROKER">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_maint_ranger_kafka_plugin_cluster_name">
+            <type>ranger-kafka-audit</type>
+            <set key="ranger.plugin.kafka.ambari.cluster.name" value="{{cluster_name}}"
+              if-type="ranger-kafka-plugin-properties" if-key="ranger-kafka-plugin-enabled" if-key-state="present"/>
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+    <service name="ATLAS">
+      <component name="ATLAS_SERVER">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_maint_ranger_atlas_plugin_cluster_name">
+            <type>ranger-atlas-audit</type>
+            <set key="ranger.plugin.atlas.ambari.cluster.name" value="{{cluster_name}}"
+              if-type="ranger-atlas-plugin-properties" if-key="ranger-atlas-plugin-enabled" if-key-state="present"/>
+          </definition>
+          <definition xsi:type="configure" id="atlas_env_gc_worker" summary="Updating Atlas Env gc-worker configuration">
+            <type>atlas-env</type>
+            <replace key="content" find="-Xloggc:$ATLAS_LOG_DIRgc-worker.log" replace-with="-Xloggc:$ATLAS_LOG_DIR/gc-worker.log"/>
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+    <service name="RANGER_KMS">
+      <component name="RANGER_KMS_SERVER">
+        <changes>
+          <definition xsi:type="configure" id="hdp_2_6_maint_ranger_kms_plugin_cluster_name">
+            <type>ranger-kms-audit</type>
+            <set key="ranger.plugin.kms.ambari.cluster.name" value="{{cluster_name}}"
+              if-type="ranger-kms-audit" if-key="ranger.plugin.kms.ambari.cluster.name" if-key-state="absent"/>
+          </definition>
+        </changes>
+      </component>
+    </service>
+
+  </services>
+</upgrade-config-changes>
